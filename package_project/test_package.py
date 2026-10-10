@@ -140,17 +140,13 @@ class TestPackage(unittest.TestCase):
 
     def test_standard_package_calculates_shipping_cost(self):
         #arrange
-        weight = 10
-        base_cost = 5
-        cost_per_lb = 1.50
-        expected_cost = base_cost + (weight * cost_per_lb)
-        package = self.make_package(cls=StandardPackage, weight=weight)
+        package = self.make_package(cls=StandardPackage, weight=10)
         
         #act
         actual_cost = package.calculate_shipping()
 
         #assert 
-        self.assertAlmostEqual(actual_cost, expected_cost, places=2)
+        self.assertAlmostEqual(actual_cost, 20.00, places=2)
 
     def test_package_rejects_non_string_tracking_number(self):
         """
@@ -172,18 +168,36 @@ class TestPackage(unittest.TestCase):
         express fee.
         """
         # Arrange
-        weight = 10
-        base_cost = 10
-        express_fee = 15
-        cost_per_lb = 2.50
-        expected_cost = base_cost + (weight * cost_per_lb) + express_fee
-        package = self.make_package(cls=ExpressPackage, weight=weight)
+        package = self.make_package(cls=ExpressPackage, weight=10)
 
         # Act
         actual_cost = package.calculate_shipping()
 
         # Assert
-        self.assertAlmostEqual(actual_cost, expected_cost, places=2)
+        self.assertAlmostEqual(actual_cost, 50.00, places=2)
+
+    def test_packages_calculate_shipping_polymorphically(self):
+        """
+        Tests that both StandardPackage and ExpressPackage can calculate
+        shipping costs polymorphically.
+
+        This demonstrates that both subclasses implement the same method
+        signature for calculate_shipping(), allowing them to be used
+        interchangeably in code that expects a Package.
+        """
+
+        # Arrange
+        standard_package = self.make_package(cls=StandardPackage, weight=10)
+        express_package = self.make_package(cls=ExpressPackage, weight=10)
+        packages = [standard_package, express_package]
+        expected_costs = [20.00, 50.00]
+
+        # Act & Assert
+        for package, expected_cost in zip(packages, expected_costs):
+            with self.subTest(package=type(package).__name__):
+                actual_costs = package.calculate_shipping()
+                self.assertAlmostEqual(actual_costs, expected_cost, places=2)
+
 
 if __name__ == "__main__":
     # Run the tests when this file is executed directly with:
